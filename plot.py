@@ -5,12 +5,16 @@ import csv
 from sympy import true
 
 sys_init = 'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzz'
-freqrange = np.arange(10000, 101800, 1800)
+# freqrange = np.arange(10000, 101800, 1800)
+# inc_step = 21
+# min_freq = 5000
+# max_freq = 100000
+# freqrange = np.arange(min_freq, max_freq+1, (max_freq - min_freq)/(inc_step-1))
 
+inc_step = 4
+freqrange = np.array([10000, 20000, 30000, 40000])
 
-
-s=serial.Serial('COM6', 9600)
-
+s=serial.Serial('COM4', 9600)
 
 #plt.figure()
 plt.ion()
@@ -44,7 +48,7 @@ while True:
         print(impedance_str)
         print(phase_str)
 
-        if i>=51:
+        if i>=inc_step:
             i=0
             break 
     '''

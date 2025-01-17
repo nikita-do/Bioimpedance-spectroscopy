@@ -15,14 +15,13 @@ from sympy import true
 sys_init = 'zzzzzzzzzzzzzzzzzzzzzzzzzzzzzz'
 csvname = 'result.csv'
 
-inc_step = 51
-min_freq = 5000
-max_freq = 100000 + (100000-min_freq)/inc_step
+freq_num = 4
 Rcalibrate = 10000
 freq_count = 0
 cal_check = False
 Magnitude = 0
-freqrange = np.arange(min_freq, max_freq, (max_freq - min_freq)/inc_step)
+
+freqrange = [5000,9500,23000,32000] # 4 frequency points in main.c
 xs = np.array([])
 Impedance_str = np.array([])
 Rgain = np.array([])
@@ -43,7 +42,7 @@ class App(QMainWindow):
         self.height = 700
         self.UIcompnents()
         self.serial = QtSerialPort.QSerialPort(
-            'COM6',
+            'COM4',
             baudRate=QtSerialPort.QSerialPort.Baud9600,
             readyRead=self.receive
         )
@@ -153,7 +152,7 @@ class App(QMainWindow):
         freq_count = 0
         #global P_sys, P
 
-        s = serial.Serial('COM6', 9600)
+        s = serial.Serial('COM4', 9600)
         s.write(sys_init.encode())
 
         while True:
@@ -180,7 +179,9 @@ class App(QMainWindow):
                 if ((real < 0 and im > 0) or (real < 0 and im < 0)):
                     P_sys = 180 + math.atan(np.double(Igain[freq_count]) / np.double(Rgain[freq_count])) * 57.2957795
                 sys_phase = np.append(sys_phase, P_sys)
-            
+                
+                print('gainfactor=', gainfactor)
+                print('sys_phase=', sys_phase)
             
             if cal_check == True:
                 Impedance_str = np.append(Impedance_str, (10**12) / (np.double(gainfactor[freq_count]) * np.double(Magnitude)))
@@ -195,11 +196,12 @@ class App(QMainWindow):
             #print('f=', freq_count)
             #print('rg=', Rgain)
             #print('ig=', Igain)
-            print(Impedance_str)
-            print(Phase_str)
 
-            if freq_count >= inc_step:
+
+            if freq_count >= freq_num:
                 freq_count = 0
+                print(Impedance_str)
+                print(Phase_str)
                 break
         cal_check = True
 
