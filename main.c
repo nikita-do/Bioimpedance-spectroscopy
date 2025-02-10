@@ -2,7 +2,7 @@
  * ad5933_nocal.c
  *
  * Created: 27/05/2022 5:27:30 pm
- * Modified: 13/01/2025 5:27:30 pm
+ * Modified: 10/2/2025 10:49:20 pm
  * Author : DELL
  */
 #define F_CPU 8000000UL
@@ -32,6 +32,8 @@
 #define  cyclenum_low_reg  0x8B
 #define  incsteps_reg  0x88
 
+#define sample_num 3
+
 #define  AD5933CLK  16776000
 
 /*AD5933  parameters*/
@@ -39,7 +41,7 @@ char txBuf[100] = {0};
 double Impedance_str[4], Phase_str[4];
 
 /* Input frequencies */
-unsigned long int freqrange[4] = {5000, 23000, 9500, 32000};
+unsigned long int freqrange[sample_num] = {11400, 12800, 14200};
 
 /*PC app calibrate result with 100000 resistor */
 double gainfactor[] = {10055.08178088, 10128.57280923, 10032.93701535, 10191.11753237};
@@ -56,7 +58,7 @@ unsigned long int hextodec(unsigned char data_high, unsigned char data_low) {
 int main(void) {
     //Declaration  of  variables
     unsigned char* data;
-    int Re, Im, j, cnt = 0, Mag;
+    int Re, Im, j, cnt = 1, Mag;
     unsigned long int i, kl;
     char *val;
     unsigned char real_high, real_low;
@@ -130,7 +132,7 @@ start:
     if ((Re < 0 && Im > 0) || (Re < 0 && Im < 0)) {
         Phase_str[cnt] = 180 + atan(Im / Re) * 57.2957795 - sys_phase[cnt];
     }
-    
+
     //Transmit Real, Imaginary
     sprintf(txBuf, "%d", Re);
     USART_CharTransmit(txBuf);
@@ -143,23 +145,18 @@ start:
 
     PORTD = (0 << PD4); // Turn off the LED
     _delay_ms(100);
-    
-    // Check if four measurements have not finished
-    if (cnt < 3) {
+
+    // Check if enough measurements have been measured
+    if (cnt < sample_num) {
         cnt++;
-        _delay_ms(100);
         goto start;
-    }
-    
-    else {
-        if((Impedance_str[0]/Impedance_str[1])>(Impedance_str[2]/Impedance_str[3]))
-        {
+    } else {
+
+        if ((Phase_str[0] < -60) &&(Phase_str[1] < -60) &&(Phase_str[2] < -60)) {
+            // if all frequencies are less than -60
             PORTD = (1 << PD4);
-            _delay_ms(5000);
-            PORTD = (0 << PD4);
         }
-        else 
-        {
+        else {
             PORTD = (1 << PD4);
             _delay_ms(500);
             PORTD = (0 << PD4);
@@ -169,11 +166,12 @@ start:
             PORTD = (0 << PD4);
         }
         cnt = 0;
-        
+
         //Power  down  mode
         TWI_byte_write(control_high_reg, 0xA1);
+        _delay_ms(100);
     }
-//Setting  up  connection  with  the  PC  interface
+    //Setting  up  connection  with  the  PC  interface
 com:
     val = USART_CharReceive();
     if ((i = strncmp(val, "z", 1)) == 0) {
@@ -185,3 +183,6 @@ com:
         goto com;
     }
 }
+
+
+
