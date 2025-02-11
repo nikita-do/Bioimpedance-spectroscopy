@@ -2,8 +2,7 @@
  * ad5933_nocal.c
  *
  * Created: 27/05/2022 5:27:30 pm
- * Modified: 10/2/2025 10:49:20 pm
- * Author : DELL
+ * Modified: 11/2/2025 11:36:20 pm
  */
 #define F_CPU 8000000UL
 
@@ -38,14 +37,14 @@
 
 /*AD5933  parameters*/
 char txBuf[100] = {0};
-double Impedance_str[4], Phase_str[4];
+double Impedance_str[sample_num], Phase_str[sample_num];
 
 /* Input frequencies */
 unsigned long int freqrange[sample_num] = {11400, 12800, 14200};
 
 /*PC app calibrate result with 100000 resistor */
-double gainfactor[] = {10055.08178088, 10128.57280923, 10032.93701535, 10191.11753237};
-double sys_phase[] = {273.17024303, 285.14823323, 274.94982131, 291.33515967};
+double gainfactor[] = {10055.08178088, 10128.57280923, 10032.93701535};
+double sys_phase[] = {273.17024303, 285.14823323, 274.94982131};
 
 /* Supporting functions */
 unsigned long int hextodec(unsigned char data_high, unsigned char data_low) {
@@ -58,7 +57,7 @@ unsigned long int hextodec(unsigned char data_high, unsigned char data_low) {
 int main(void) {
     //Declaration  of  variables
     unsigned char* data;
-    int Re, Im, j, cnt = 1, Mag;
+    int Re, Im, j, cnt = 0, Mag;
     unsigned long int i, kl;
     char *val;
     unsigned char real_high, real_low;
@@ -147,7 +146,7 @@ start:
     _delay_ms(100);
 
     // Check if enough measurements have been measured
-    if (cnt < sample_num) {
+    if (cnt < sample_num - 1) {
         cnt++;
         goto start;
     } else {
@@ -158,11 +157,15 @@ start:
         }
         else {
             PORTD = (1 << PD4);
-            _delay_ms(500);
+            _delay_ms(250);
             PORTD = (0 << PD4);
-            _delay_ms(500);
+            _delay_ms(250);
             PORTD = (1 << PD4);
-            _delay_ms(500);
+            _delay_ms(250);
+            PORTD = (0 << PD4);
+            _delay_ms(250);
+            PORTD = (1 << PD4);
+            _delay_ms(250);
             PORTD = (0 << PD4);
         }
         cnt = 0;
@@ -183,6 +186,5 @@ com:
         goto com;
     }
 }
-
 
 
